@@ -1,7 +1,11 @@
-﻿using Azure;
+﻿using System;
+using System.Threading.Tasks;
+using Azure;
 using Azure.Data.Tables;
 using ImageSharingWithCloud.Models;
 using ImageSharingWithCloud.Models.ViewModels;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace ImageSharingWithCloud.DAL
 {

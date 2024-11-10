@@ -1,4 +1,5 @@
-﻿using Azure;
+﻿using System.Threading.Tasks;
+using Azure;
 using ImageSharingWithCloud.Models;
 using ImageSharingWithCloud.Models.ViewModels;
 

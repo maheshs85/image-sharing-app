@@ -1,4 +1,6 @@
-﻿using ImageSharingWithCloud.DAL;
+using System.Linq;
+using System.Threading.Tasks;
+using ImageSharingWithCloud.DAL;
 using ImageSharingWithCloud.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;

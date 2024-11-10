@@ -1,13 +1,17 @@
 using Azure.Identity;
 using ImageSharingWithCloud.DAL;
 using ImageSharingWithCloud.Models;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Azure.Cosmos;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Azure;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
-using System.Configuration;
+using System.Collections.Generic;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -69,6 +73,9 @@ var dbPassword = builder.Configuration[StorageConfig.ApplicationDbPassword];
 dbConnectionString = StorageConfig.GetDatabaseConnectionString(dbConnectionString, database, dbUser, dbPassword);
 
 // TODO Add database context & enable saving sensitive data in the log (not for production use!)
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(dbConnectionString)
+           .EnableSensitiveDataLogging()); // Enable saving data in the log (not for production use!)
 // For SQL Database, allow for db connection sometimes being lost
 
 
@@ -76,8 +83,9 @@ dbConnectionString = StorageConfig.GetDatabaseConnectionString(dbConnectionStrin
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // TODO add Identity service
-
-
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
 /*
  * Best practice is to have a single instance of a Cosmos client for an application.
  * Use dependency injection to inject this single instance into ImageStorage repository.
@@ -130,6 +138,12 @@ app.MapDefaultControllerRoute();
  * More on dependency injection: https://learn.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection
  * More on DbContext lifetime: https://learn.microsoft.com/en-us/ef/core/dbcontext-configuration/
  */
+ using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var initializer = services.GetRequiredService<ApplicationDbInitializer>();
+    initializer.SeedDatabase(services).Wait();
+}
 
 
 /*

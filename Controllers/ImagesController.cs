@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using ImageSharingWithCloud.DAL;
 using ImageSharingWithCloud.Models;
 using ImageSharingWithCloud.Models.ViewModels;
@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Azure;
+using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace ImageSharingWithCloud.Controllers
 {
@@ -42,7 +45,9 @@ namespace ImageSharingWithCloud.Controllers
         }
 
         // TODO prevent CSRF
-
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "User")]
         public async Task<ActionResult> Upload(ImageView imageView)
         {
             CheckAda();
@@ -231,7 +236,6 @@ namespace ImageSharingWithCloud.Controllers
         }
 
         // TODO
-
         public async Task<ActionResult> ListAll()
         {
             CheckAda();
@@ -243,7 +247,6 @@ namespace ImageSharingWithCloud.Controllers
         }
 
         // TODO
-
         public async Task<IActionResult> ListByUser()
         {
             CheckAda();
@@ -257,7 +260,6 @@ namespace ImageSharingWithCloud.Controllers
         }
 
         // TODO
-
         public async Task<ActionResult> DoListByUser(ListByUserModel userView)
         {
             CheckAda();

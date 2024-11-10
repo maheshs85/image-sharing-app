@@ -1,4 +1,7 @@
-﻿using ImageSharingWithCloud.Models;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using ImageSharingWithCloud.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace ImageSharingWithCloud.DAL
 {

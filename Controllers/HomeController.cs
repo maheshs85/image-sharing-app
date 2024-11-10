@@ -1,9 +1,12 @@
-﻿using System.Diagnostics;
+using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using ImageSharingWithCloud.DAL;
 using ImageSharingWithCloud.Models;
 using ImageSharingWithCloud.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace ImageSharingWithCloud.Controllers
 {

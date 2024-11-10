@@ -1,6 +1,10 @@
-﻿using ImageSharingWithCloud.Models;
+using System;
+using System.Threading.Tasks;
+using ImageSharingWithCloud.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace ImageSharingWithCloud.DAL
 {

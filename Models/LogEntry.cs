@@ -1,4 +1,5 @@
-﻿using Azure;
+﻿using System;
+using Azure;
 using Azure.Data.Tables;
 
 namespace ImageSharingWithCloud.Models

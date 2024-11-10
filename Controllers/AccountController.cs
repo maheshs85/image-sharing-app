@@ -1,15 +1,22 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using ImageSharingWithCloud.DAL;
 using ImageSharingWithCloud.Models;
 using ImageSharingWithCloud.Models.ViewModels;
+using ImageSharingWithSecurity.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Logging;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace ImageSharingWithCloud.Controllers
 {
     // TODO require authorization
+    [Authorize]
     public class AccountController : BaseController
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -29,7 +36,8 @@ namespace ImageSharingWithCloud.Controllers
         }
 
         // TODO allow anonymous
-
+        [HttpGet]
+        [AllowAnonymous]
         public ActionResult Register()
         {
             CheckAda();
@@ -37,7 +45,9 @@ namespace ImageSharingWithCloud.Controllers
         }
 
         // TODO allow anonymous, prevent CSRF
-
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
         public async Task<ActionResult> Register(RegisterModel model)
         {
             CheckAda();
@@ -70,7 +80,8 @@ namespace ImageSharingWithCloud.Controllers
         }
 
         // TODO allow anonymous
-
+        [HttpGet]
+        [AllowAnonymous]
         public IActionResult Login(string returnUrl)
         {
             CheckAda();
@@ -79,7 +90,9 @@ namespace ImageSharingWithCloud.Controllers
         }
 
         // TODO allow anonymous, prevent CSRF
-
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginModel model, string returnUrl)
         {
             CheckAda();
@@ -95,12 +108,12 @@ namespace ImageSharingWithCloud.Controllers
 
             ApplicationUser theUser = null;
             // TODO Use UserManager to obtain the user record from the database.
-
+            theUser = await UserManager.FindByNameAsync(model.UserName);
             if (theUser != null && theUser.Active)
             {
                 SignInResult result = null;
                 // TODO Use SignInManager to log in the user.
-
+                result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, model.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {
                     SaveAdaCookie(theUser.Ada);
@@ -121,6 +134,7 @@ namespace ImageSharingWithCloud.Controllers
         }
 
         // TODO
+        [HttpGet]        
         public ActionResult Password(PasswordMessageId? message)
         {
             CheckAda();
@@ -134,7 +148,8 @@ namespace ImageSharingWithCloud.Controllers
         }
 
         // TODO prevent CSRF
-
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<ActionResult> Password(LocalPasswordModel model)
         {
             CheckAda();
@@ -166,25 +181,28 @@ namespace ImageSharingWithCloud.Controllers
         }
 
         // TODO require Admin permission
-
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
         public IActionResult Manage()
         {
             CheckAda();
 
-            List<SelectListItem> users = new List<SelectListItem>();
+            List<SelectListItem> users = [];
             foreach (var u in Db.Users)
             {
-                SelectListItem item = new SelectListItem { Text = u.UserName, Value = u.Id, Selected = u.Active };
+                SelectListItem item = new() { Text = u.UserName, Value = u.Id, Selected = u.Active };
                 users.Add(item);
             }
 
             ViewBag.message = "";
-            ManageModel model = new ManageModel { Users = users };
+            ManageModel model = new() { Users = users };
             return View(model);
         }
 
         // TODO require Admin permission, prevent CSRF
-
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Manage(ManageModel model)
         {
             CheckAda();
@@ -246,7 +264,6 @@ namespace ImageSharingWithCloud.Controllers
                 ReturnUrl = returnUrl
             });
         }
-
 
         private void SaveAdaCookie(bool value)
         {
