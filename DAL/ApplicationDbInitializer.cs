@@ -60,17 +60,43 @@ namespace ImageSharingWithCloud.DAL
             }
 
             // TODO add other roles
-
-
-            _logger.LogDebug("Adding user: jfk");
-            idResult = await CreateAccount(serviceProvider, InitAdminUser, "jfk123", "Admin");
+            _logger.LogDebug("Adding role: Approver");
+            idResult = await CreateRole(serviceProvider, "Approver");
             if (!idResult.Succeeded)
             {
-                _logger.LogDebug("Failed to create jfk user!");
+                _logger.LogDebug("Failed to create Approver role!");
+            }
+
+            _logger.LogDebug("Adding role: Admin");
+            idResult = await CreateRole(serviceProvider, "Admin");
+            if (!idResult.Succeeded)
+            {
+                _logger.LogDebug("Failed to create Admin role!");
+            }
+
+            _logger.LogDebug("Adding role: Supervisor");
+            idResult = await CreateRole(serviceProvider, "Supervisor");
+            if (!idResult.Succeeded)
+            {
+                _logger.LogDebug("Failed to create Supervisor role!");
+            }
+
+            _logger.LogDebug("Adding user: jfk");
+            idResult = await CreateAccount(serviceProvider, InitAdminUser, "Jfk123@@", "Admin");
+            if (!idResult.Succeeded)
+            {
+                _logger.LogDebug($"Failed to create jfk user! Errors: {string.Join(", ", idResult.Errors.Select(e => e.Description))}");
+            }
+
+            _logger.LogDebug("Adding admin: mahesh");
+            idResult = await CreateAccount(serviceProvider, "mahesh@example.org", "Mahesh123@@", "Admin");
+            if (!idResult.Succeeded)
+            {
+                _logger.LogDebug("Failed to create mahesh user!");
             }
 
             _logger.LogDebug("Adding user: nixon");
-            idResult = await CreateAccount(serviceProvider, "nixon@example.org", "nixon123", "User");
+            idResult = await CreateAccount(serviceProvider, "nixon@example.org", "Nixon123@@", "User");
             if (!idResult.Succeeded)
             {
                 _logger.LogDebug("Failed to create nixon user!");
@@ -78,20 +104,33 @@ namespace ImageSharingWithCloud.DAL
             
             
             _logger.LogDebug("Adding user: lbj");
-            idResult = await CreateAccount(serviceProvider, "lbj@example.org", "lbj123", "User");
+            idResult = await CreateAccount(serviceProvider, "lbj@example.org", "Lbj123@@", "User");
             if (!idResult.Succeeded)
             {
                 _logger.LogDebug("Failed to create lbj user!");
             }
 
             _logger.LogDebug("Adding user: obama");
-            idResult = await CreateAccount(serviceProvider, "obama@example.org", "obama123", "Supervisor");
+            idResult = await CreateAccount(serviceProvider, "obama@example.org", "Obama123@@", "Supervisor");
             if (!idResult.Succeeded)
             {
                 _logger.LogDebug("Failed to create obama user!");
             }
 
             // TODO add other users and assign more roles
+            _logger.LogDebug("Adding approver: lincoln");
+            idResult = await CreateAccount(serviceProvider, "lincoln@example.org", "Lincoln123@@", "Approver");
+            if (!idResult.Succeeded)
+            {
+                _logger.LogDebug("Failed to create lincoln user!");
+            }
+
+            _logger.LogDebug("Adding user: washington");
+            idResult = await CreateAccount(serviceProvider, "washington@example.org", "Washington123@@", "User");
+            if (!idResult.Succeeded)
+            {
+                _logger.LogDebug("Failed to create washington user!");
+            }
 
             await _db.SaveChangesAsync();
 

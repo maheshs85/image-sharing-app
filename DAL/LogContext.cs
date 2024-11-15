@@ -21,9 +21,8 @@ namespace ImageSharingWithCloud.DAL
 
             Uri logTableServiceUri = null;
             string logTableName = null;
-            /*
-             * TODO Get the table service URI and table name.
-             */
+            logTableServiceUri = new Uri(configuration[StorageConfig.LogEntryDbUri]);
+            logTableName = configuration[StorageConfig.LogEntryDbTable];
             logger.LogInformation("Looking up Storage URI... ");
             
             logger.LogInformation("Using Table Storage URI: " + logTableServiceUri);
@@ -37,6 +36,7 @@ namespace ImageSharingWithCloud.DAL
             logger.LogInformation("Initializing table client....");
             // TODO Set the table client for interacting with the table service (see TableClient constructors)
 
+            _tableClient = new TableClient(logTableServiceUri, logTableName, credential);
             logger.LogInformation("....table client URI = " + _tableClient.Uri);
         }
 
@@ -54,7 +54,7 @@ namespace ImageSharingWithCloud.DAL
             logger.LogDebug("Adding log entry for image: {0}", image.Id);
 
             Response response = null;
-            // TODO add a log entry for this image view
+            response = await _tableClient.AddEntityAsync(entry);
 
             if (response.IsError)
             {
@@ -71,8 +71,8 @@ namespace ImageSharingWithCloud.DAL
         {
             if (todayOnly)
             {
-                // TODO just return logs for today
-                return null;
+                DateTime today = DateTime.UtcNow.Date;
+                return _tableClient.QueryAsync<LogEntry>(logEntry => logEntry.Timestamp >= today && logEntry.Timestamp < today.AddDays(1));
             }
             else
             {

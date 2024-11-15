@@ -74,8 +74,11 @@ dbConnectionString = StorageConfig.GetDatabaseConnectionString(dbConnectionStrin
 
 // TODO Add database context & enable saving sensitive data in the log (not for production use!)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(dbConnectionString)
-           .EnableSensitiveDataLogging()); // Enable saving data in the log (not for production use!)
+{
+    options.UseSqlServer(dbConnectionString, options => 
+                                           options.EnableRetryOnFailure());
+    options.EnableSensitiveDataLogging();
+}); // Enable saving data in the log (not for production use!)
 // For SQL Database, allow for db connection sometimes being lost
 
 
@@ -98,6 +101,8 @@ builder.Services.AddScoped<ILogContext, LogContext>();
 
 // Add our own service for managing uploading of images to blob storage
 builder.Services.AddScoped<IImageStorage, ImageStorage>();
+
+builder.Services.AddScoped<ApplicationDbInitializer>();
 
 
 WebApplication app = builder.Build();

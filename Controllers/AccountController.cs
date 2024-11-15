@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using ImageSharingWithCloud.DAL;
 using ImageSharingWithCloud.Models;
 using ImageSharingWithCloud.Models.ViewModels;
-using ImageSharingWithSecurity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;

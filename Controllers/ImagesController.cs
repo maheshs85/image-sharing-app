@@ -13,6 +13,7 @@ using System.Collections.Generic;
 namespace ImageSharingWithCloud.Controllers
 {
     // TODO require authorization by default
+    [Authorize]
     public class ImagesController : BaseController
     {
         private readonly ILogContext _logContext;
@@ -33,14 +34,14 @@ namespace ImageSharingWithCloud.Controllers
         }
 
 
-        // TODO
-
+        [HttpGet]
         public ActionResult Upload()
         {
             CheckAda();
 
             ViewBag.Message = "";
             ImageView imageView = new ImageView();
+            _logger.LogDebug("In image view upload method....");
             return View(imageView);
         }
 
@@ -50,6 +51,7 @@ namespace ImageSharingWithCloud.Controllers
         [Authorize(Roles = "User")]
         public async Task<ActionResult> Upload(ImageView imageView)
         {
+            _logger.LogDebug("In image view upload post method....");
             CheckAda();
 
             _logger.LogDebug("Processing the upload of an image....");
@@ -75,13 +77,24 @@ namespace ImageSharingWithCloud.Controllers
 
             string imageId = null;
 
-            // TODO save image metadata in the database 
-            
-            // end TODO
+            var image = new Image
+            {
+                Id = Guid.NewGuid().ToString(),
+                Caption = imageView.Caption,
+                Description = imageView.Description,
+                DateTaken = imageView.DateTaken,
+                UserId = user.Id,
+                UserName = user.UserName,
+                Approved = true,
+                Valid = true
+            };
 
-            _logger.LogDebug("...saving image file on disk....");
+            await ImageStorage.SaveImageInfoAsync(image);
+            imageId = image.Id;
 
-            // TODO save image file on disk
+            _logger.LogDebug("...saving image file to blob storage....");
+
+            await ImageStorage.SaveImageFileAsync(imageView.ImageFile, image.UserId, image.Id);
 
             _logger.LogDebug("....forwarding to the details page, image Id = "+imageId);
 
@@ -89,7 +102,6 @@ namespace ImageSharingWithCloud.Controllers
         }
 
         // TODO
-
         public async Task<ActionResult> Details(string UserId, string Id)
         {
             CheckAda();
@@ -112,24 +124,25 @@ namespace ImageSharingWithCloud.Controllers
                 UserId = image.UserId
             };
 
-            // TODO Log this view of the image
-
+            await _logContext.AddLogEntryAsync(image.UserId, image.UserName, imageView);
 
             return View(imageView);
         }
 
         // TODO
-
+        [Authorize(Roles = "User")]
         public async Task<ActionResult> Edit(string UserId, string Id)
         {
             CheckAda();
             ApplicationUser user = await GetLoggedInUser();
+            _logger.LogDebug("Looking up user {user} {user.id} {userId}", user, user.Id, UserId);
             if (user == null || !user.Id.Equals(UserId))
             {
                 return RedirectToAction("Error", "Home", new { ErrId = "EditNotAuth" });
             }
 
             Image image = await ImageStorage.GetImageInfoAsync(UserId, Id);
+            _logger.LogDebug("Looking up image, \"Image\"={image}", image);
             if (image == null)
             {
                 return RedirectToAction("Error", "Home", new { ErrId = "EditNotFound" });
@@ -145,14 +158,17 @@ namespace ImageSharingWithCloud.Controllers
                 DateTaken = image.DateTaken,
 
                 UserId = image.UserId,
-                UserName = image.UserName
+                UserName = image.UserName,
+
+                Uri = ImageStorage.ImageUri(image.UserId, image.Id),
             };
 
             return View("Edit", imageView);
         }
 
         // TODO prevent CSRF
-
+        [ValidateAntiForgeryToken]
+        [HttpPost]
         public async Task<ActionResult> DoEdit(string UserId, string Id, ImageView imageView)
         {
             CheckAda();
@@ -165,6 +181,7 @@ namespace ImageSharingWithCloud.Controllers
             }
 
             ApplicationUser user = await GetLoggedInUser();
+            _logger.LogDebug("Looking up user {user} {user.id} {userId}", user, user.Id, UserId);
             if (user == null || !user.Id.Equals(UserId))
             {
                 return RedirectToAction("Error", "Home", new { ErrId = "EditNotAuth" });
@@ -186,20 +203,21 @@ namespace ImageSharingWithCloud.Controllers
         }
 
         // TODO
-
+        [Authorize(Roles = "User")]
         public async Task<ActionResult> Delete(string UserId, string Id)
         {
             CheckAda();
             ApplicationUser user = await GetLoggedInUser();
             if (user == null || !user.Id.Equals(UserId))
             {
-                return RedirectToAction("Error", "Home", new { ErrId = "EditNotAuth" });
+                return RedirectToAction("Error", "Home", new { ErrId = "DeleteNotAuth" });
             }
 
             Image image = await ImageStorage.GetImageInfoAsync(user.Id, Id);
+            _logger.LogDebug("Looking up image, \"Image\"={image}", image);
             if (image == null)
             {
-                return RedirectToAction("Error", "Home", new { ErrId = "EditNotFound" });
+                return RedirectToAction("Error", "Home", new { ErrId = "DeleteNotFound" });
             }
 
             ImageView imageView = new ImageView();
@@ -213,20 +231,20 @@ namespace ImageSharingWithCloud.Controllers
         }
 
         // TODO prevent CSRF
-
+        [ValidateAntiForgeryToken]
         public async Task<ActionResult> DoDelete(string UserId, string Id)
         {
             CheckAda();
             ApplicationUser user = await GetLoggedInUser();
             if (user == null || !user.Id.Equals(UserId))
             {
-                return RedirectToAction("Error", "Home", new { ErrId = "EditNotAuth" });
+                return RedirectToAction("Error", "Home", new { ErrId = "DeleteNotAuth" });
             }
 
             Image image = await ImageStorage.GetImageInfoAsync(user.Id, Id);
             if (image == null)
             {
-                return RedirectToAction("Error", "Home", new { ErrId = "EditNotFound" });
+                return RedirectToAction("Error", "Home", new { ErrId = "DeleteNotFound" });
             }
 
             await ImageStorage.RemoveImageAsync(image);
@@ -236,23 +254,25 @@ namespace ImageSharingWithCloud.Controllers
         }
 
         // TODO
+        [HttpGet]
         public async Task<ActionResult> ListAll()
         {
             CheckAda();
             ApplicationUser user = await GetLoggedInUser();
 
             IList<Image> images = await ImageStorage.GetAllImagesInfoAsync();
+            _logger.LogDebug("Looking up images, \"Images\"={images}", images);
             ViewBag.UserId = user.Id;
             return View(images);
         }
 
         // TODO
-        public async Task<IActionResult> ListByUser()
+         public async Task<IActionResult> ListByUser()
         {
             CheckAda();
 
             // Return form for selecting a user from a drop-down list
-            var userView = new ListByUserModel();
+            ListByUserModel userView = new ListByUserModel();
             var defaultId = (await GetLoggedInUser()).Id;
 
             userView.Users = new SelectList(ActiveUsers(), "Id", "UserName", defaultId);
@@ -277,13 +297,14 @@ namespace ImageSharingWithCloud.Controllers
             /*
              * Eager loading of related entities
              */
-            return View();
+            var images = await ImageStorage.GetImageInfoByUserAsync(theUser);
+            return View("ListAll", images);
             // End TODO
 
         }
 
         // TODO
-
+        [Authorize(Roles = "Supervisor")]
         public ActionResult ImageViews()
         {
             CheckAda();
@@ -292,7 +313,8 @@ namespace ImageSharingWithCloud.Controllers
 
 
         // TODO
-
+        [HttpGet]
+        [Authorize(Roles = "Supervisor")]
         public ActionResult ImageViewsList(string Today)
         {
             CheckAda();
@@ -301,7 +323,5 @@ namespace ImageSharingWithCloud.Controllers
             _logger.LogDebug("Query completed, rendering results....");
             return View(entries);
         }
-
     }
-
 }

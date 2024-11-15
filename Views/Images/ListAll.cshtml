@@ -29,8 +29,8 @@
                 {
                     <text>
                         <!-- TODO add Edit and Delete links -->
-                        <a asp-action="Edit" asp-route-id="@image.Id">Edit</a> |
-                        <a asp-action="Delete" asp-route-id="@image.Id">Delete</a>
+                        <a asp-action="Edit" asp-route-userid="@image.UserId" asp-route-id="@image.Id">Edit</a> |
+                        <a asp-action="Delete" asp-route-userid="@image.UserId" asp-route-id="@image.Id">Delete</a>
                     </text>
                 }
             </td>
